@@ -18,3 +18,4 @@ def shorten_url():
     long_url = data.get("long_url")
     
     if not long_url:
+        # This is the updated code for the flask app
