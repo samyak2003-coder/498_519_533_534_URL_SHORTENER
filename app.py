@@ -17,5 +17,6 @@ def shorten_url():
     data = request.get_json()
     long_url = data.get("long_url")
     
+    # This is the updated code for the flask app
     if not long_url:
-        # This is the updated code for the flask app
+        
