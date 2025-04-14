@@ -40,9 +40,9 @@ jobs:
           provenance: true
           sbom: true
 
-      - name: Run app using Docker Compose
+      - name: Start containers with Docker Compose
         run: |
-          docker-compose up -d
+          docker compose up -d
           sleep 10  # Wait for containers to be ready
 
       - name: Send test request to Flask app
