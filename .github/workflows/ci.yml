@@ -93,37 +93,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Port-forward the service
         run: |
-          kubectl port-forward svc/url-shortener-service 8081:80 
-      - name: Wait for the service to be up
+          kubectl port-forward svc/url-shortener-service 8081:80 &
+      - name: Load test the app with apache benchmark
         run: |
-          # Retry mechanism to check if the service is up and running
-          for i in {1..10}; do
-            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8081/shorten \
-            -H "Content-Type: application/json" \
-            -d '{"long_url":"https://smashkarts.io"}')
+            HTTP_STATUS=$(ab -n 10000 -c 1000 -p postdata.json -T application/json http://localhost:8081/shorten)
             if [[ "$HTTP_STATUS" == "200" ]]; then
               echo "Service is up and running!"
               break
             fi
-            echo "Waiting for service to be up, attempt $i/10..."
-            sleep 10
-          done
-  
-      - name: Test deployed app 
-        run: |
-          SUCCESS=true
-            HTTP_STATUS=$(ab -n 1000 -c 100 -p postdata.json -T application/json http://localhost:8081/shorten)
-            
-            if [[ "$HTTP_STATUS" != "200" ]]; then
-              echo "Test failed for request $i: HTTP status is $HTTP_STATUS"
-              SUCCESS=false
-            fi
-          
-      - name: Final result check
-        run: |
-          if [ "$SUCCESS" = false ]; then
-            exit 1
-          else
-            echo "All tests passed: HTTP status 200 for all requests"
-          fi
-  
