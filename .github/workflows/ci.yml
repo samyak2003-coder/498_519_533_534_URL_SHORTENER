@@ -108,19 +108,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Test deployed app (send 100 POST requests)
+      - name: Port-forward the service again
         run: |
-          # Start a background process to send requests
-          for i in {1..100}; do
-            curl -s -X POST http://localhost:8081/shorten \
-            -H "Content-Type: application/json" \
-            -d '{"long_url":"https://www.amazon.in/Daikin-Inverter-Display-Technology-MTKL50U/dp/B0BK1KS6ZD/?_encoding=UTF8&ref_=pd_hp_d_btf_ci_mcx_mr_ca_id_hp_d"}' &
-            sleep 0.01
-          done
-          # Wait for all background jobs to finish
-          wait
+          kubectl port-forward svc/url-shortener-service 8081:80 &
 
-      - name: Check if all requests returned status 200
+      - name: Test deployed app (send 100 POST requests)
         run: |
           SUCCESS=true
           for i in {1..100}; do
@@ -133,7 +125,9 @@ jobs:
               SUCCESS=false
             fi
           done
-
+          
+      - name: Final result check
+        run: |
           if [ "$SUCCESS" = false ]; then
             exit 1
           else
