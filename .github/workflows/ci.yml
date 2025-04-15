@@ -51,7 +51,7 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{"long_url": "https://smashkarts.io"}'
 
-  deploy:
+  test:
     needs: build
     runs-on: ubuntu-latest
 
@@ -89,11 +89,6 @@ jobs:
       - name: Wait for ingress controller
         run: |
           kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=120s
-  test:
-    needs: deploy
-    runs-on: ubuntu-latest
-  
-    steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Port-forward the service
