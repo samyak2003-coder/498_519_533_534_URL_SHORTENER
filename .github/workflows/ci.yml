@@ -43,7 +43,7 @@ jobs:
       - name: Start containers with Docker Compose
         run: |
           docker compose up -d
-          sleep 10  # Wait for containers to be ready
+          sleep 10
 
       - name: Send test request to Flask app
         run: |
@@ -51,37 +51,44 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{"long_url": "https://smashkarts.io"}'
 
-        
-    # - name: Start Minikube
-    #   run: |
-    #     minikube start --driver=docker
-        
-    # - name: Apply Kubernetes Manifests
-    #   run: |
-    #     kubectl apply -f redis-deployment.yaml
-    #     kubectl apply -f configmap.yaml
-    #     kubectl apply -f secrets.yaml
-    #     kubectl apply -f url-shortener-deployment.yaml
-        
-    # - name: Enable Ingress and HPA in Minikube
-    #   run: |
-    #     minikube addons enable ingress
-    #     minikube addons enable hpa
-        
-    # - name: Apply Ingress and HPA configuration
-    #   run: |
-    #     kubectl apply -f ingress.yaml
-    #     kubectl apply -f hpa.yaml
-        
-    # - name: Port-forward
-    #   run: |
-    #     kubectl port-forward svc/url-shortener-service 8081:80 
-        
-    # - name: Test URL shortening service
-    #   run: |
-    #     for i in {1..100}; do
-    #       curl -s -X POST http://localhost:8081/shorten \
-    #       -H "Content-Type: application/json" \
-    #       -d '{"long_url":"https://smashkarts.io"}' &
-    #       sleep 0.01
-    #     done
+      # ✅ Setup Minikube
+      - name: Start Minikube
+        uses: medyagh/setup-minikube@latest
+
+      - name: Verify Minikube Cluster
+        run: kubectl get pods -A
+
+      - name: Load Docker image into Minikube
+        run: |
+          minikube image load ${{ steps.meta.outputs.tags }}
+
+      - name: Apply Kubernetes Manifests
+        run: |
+          kubectl apply -f redis-deployment.yaml
+          kubectl apply -f configmap.yaml
+          kubectl apply -f secrets.yaml
+          kubectl apply -f url-shortener-deployment.yaml
+
+      - name: Enable Ingress
+        run: |
+          minikube addons enable ingress
+
+      - name: Apply Ingress and HPA configuration
+        run: |
+          kubectl apply -f ingress.yaml
+          # Ensure metrics-server is enabled instead of HPA addon
+          minikube addons enable metrics-server
+          kubectl apply -f hpa.yaml
+
+      - name: Port-forward the service
+        run: |
+          kubectl port-forward svc/url-shortener-service 8081:80 &
+
+      - name: Test URL shortening service via Kubernetes
+        run: |
+          for i in {1..10}; do
+            curl -s -X POST http://localhost:8081/shorten \
+              -H "Content-Type: application/json" \
+              -d '{"long_url":"https://smashkarts.io"}' &
+            sleep 0.5
+          done
