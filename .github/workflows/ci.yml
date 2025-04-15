@@ -103,7 +103,7 @@ jobs:
 
       - name: Test deployed app
         run: |
-            ab -n 1000 -c 100 -p postdata.json -T application/json http://localhost:8081/shorten
+            ab -n 10000 -c 1000 -p postdata.json -T application/json http://localhost:8081/shorten
           
       - name: Final result check
         run: |
