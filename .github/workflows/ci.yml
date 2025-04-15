@@ -89,6 +89,9 @@ jobs:
       - name: Wait for ingress controller
         run: |
           kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=120s
+      - name: Port-forward the service
+        run: |
+          kubectl port-forward svc/url-shortener-service 8081:80 
 
   test:
     needs: deploy
@@ -97,10 +100,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-  
-      - name: Port-forward the service again
-        run: |
-          kubectl port-forward svc/url-shortener-service 8081:80 &
   
       - name: Wait for the service to be up
         run: |
