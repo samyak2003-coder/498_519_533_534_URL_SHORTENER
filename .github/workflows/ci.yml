@@ -96,9 +96,13 @@ jobs:
 
       - name: Test deployed app
         run: |
-          curl -s -X POST http://localhost:8081/shorten \
-          -H "Content-Type: application/json" \
-          -d '{"long_url":"https://smashkarts.io"}'
+            for i in {1..1000}; do
+              curl -s -X POST http://localhost:8081/shorten \
+                -H "Content-Type: application/json" \
+                -d '{"long_url":"https://www.amazon.in/Daikin-Inverter-Display-Technology-MTKL50U/dp/B0BK1KS6ZD/?_encoding=UTF8&ref_=pd_hp_d_btf_ci_mcx_mr_ca_id_hp_d"}' &
+              sleep 0.01
+            done
+            wait
 
   test:
     needs: deploy
@@ -116,9 +120,9 @@ jobs:
         run: |
           SUCCESS=true
           for i in {1..100}; do
-            HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8081/shorten \
-            -H "Content-Type: application/json" \
-            -d '{"long_url":"https://www.amazon.in/Daikin-Inverter-Display-Technology-MTKL50U/dp/B0BK1KS6ZD/?_encoding=UTF8&ref_=pd_hp_d_btf_ci_mcx_mr_ca_id_hp_d"}')
+            HTTP_STATUS=$(curl -s -X POST http://localhost:8081/shorten \
+          -H "Content-Type: application/json" \
+          -d '{"long_url":"https://smashkarts.io"}')
             
             if [[ "$HTTP_STATUS" != "200" ]]; then
               echo "Test failed for request $i: HTTP status is $HTTP_STATUS"
