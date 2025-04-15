@@ -51,7 +51,17 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{"long_url": "https://smashkarts.io"}'
 
-      # ✅ Setup Minikube
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
       - name: Start Minikube
         uses: medyagh/setup-minikube@latest
 
@@ -60,38 +70,32 @@ jobs:
 
       - name: Load Docker image into Minikube
         run: |
-          minikube image load ${{ steps.meta.outputs.tags }}
+          minikube image load ${{ vars.DOCKER_USERNAME }}/url-shortener:latest
 
-      - name: Apply Kubernetes Manifests
+      - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f redis-deployment.yaml
           kubectl apply -f configmap.yaml
           kubectl apply -f secrets.yaml
           kubectl apply -f url-shortener-deployment.yaml
+          kubectl apply -f ingress.yaml
+          kubectl apply -f hpa.yaml
 
-      - name: Enable Ingress and Metrics Server in Minikube
+      - name: Enable ingress and metrics-server
         run: |
           minikube addons enable ingress
           minikube addons enable metrics-server
 
-      - name: Wait for Ingress Controller to be ready
+      - name: Wait for ingress controller
         run: |
           kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=120s
-
-      - name: Apply Ingress and HPA configuration
-        run: |
-          kubectl apply -f ingress.yaml
-          kubectl apply -f hpa.yaml
 
       - name: Port-forward the service
         run: |
           kubectl port-forward svc/url-shortener-service 8081:80 &
 
-      - name: Test URL shortening service via Kubernetes
+      - name: Test deployed app
         run: |
-          for i in {1..10}; do
-            curl -s -X POST http://localhost:8081/shorten \
-              -H "Content-Type: application/json" \
-              -d '{"long_url":"https://smashkarts.io"}' &
-            sleep 0.5
-          done
+          curl -s -X POST http://localhost:8081/shorten \
+          -H "Content-Type: application/json" \
+          -d '{"long_url":"https://smashkarts.io"}'
