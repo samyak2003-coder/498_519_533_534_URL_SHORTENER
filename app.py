@@ -18,13 +18,7 @@ def shorten_url():
     long_url = data.get("long_url")
     
     if not long_url:
-        return jsonify({"error": "Missing URL"}), 400
-    
-    short_url = generate_short_url(long_url)
-    redis_client.set(short_url, long_url)
-    
-    return jsonify({"short_url": BASE_URL + short_url})
-
+        return jsonify({"error
 @app.route('/<short_url>', methods=['GET'])
 def redirect_url(short_url):
     long_url = redis_client.get(short_url)
