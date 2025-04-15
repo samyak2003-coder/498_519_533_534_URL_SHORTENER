@@ -1,0 +1,30 @@
+docker context use desktop-linux
+
+docker-compose up --build
+minikube stop 
+minikube delete
+minikube start 
+minikube status
+minikube tunnel
+
+
+kubectl apply -f redis-deployment.yaml
+kubectl apply -f configmap.yaml
+kubectl apply -f secrets.yaml
+kubectl apply -f url-shortener-deployment.yaml
+
+kubectl port-forward svc/url-shortener-service 8081:80
+
+
+minikube addons enable ingress
+kubectl apply -f ingress.yaml
+kubectl get pods -n ingress-nginx
+kubectl get ingress
+
+minikube addons enable metrics-server
+kubectl apply -f hpa.yaml
+kubectl get pods -n kube-system
+kubectl get hpa
+
+ab -n 1000 -c 100 -p postdata.json -T application/json http://localhost:8081/shorten
+
