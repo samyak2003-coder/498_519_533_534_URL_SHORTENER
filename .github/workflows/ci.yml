@@ -69,15 +69,18 @@ jobs:
           kubectl apply -f secrets.yaml
           kubectl apply -f url-shortener-deployment.yaml
 
-      - name: Enable Ingress
+      - name: Enable Ingress and Metrics Server in Minikube
         run: |
           minikube addons enable ingress
+          minikube addons enable metrics-server
+
+      - name: Wait for Ingress Controller to be ready
+        run: |
+          kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=120s
 
       - name: Apply Ingress and HPA configuration
         run: |
           kubectl apply -f ingress.yaml
-          # Ensure metrics-server is enabled instead of HPA addon
-          minikube addons enable metrics-server
           kubectl apply -f hpa.yaml
 
       - name: Port-forward the service
